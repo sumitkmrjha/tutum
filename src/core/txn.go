@@ -1,5 +1,7 @@
 package core
 
+import "github.com/dgraph-io/badger/v2"
+
 type txn interface {
 	GetDoc()
 	InsertDoc()
@@ -8,23 +10,62 @@ type txn interface {
 }
 
 type txnImpl struct{
-
+	d dbImpl
+	doc Doc
 }
 
-func (t *txnImpl) GetDoc(key []byte, collection []byte) []byte{
+func GetTxn() txnImpl{
+	var t txnImpl
+	return t
+}
+
+func (t *txnImpl) GetDoc(key []byte, collection []byte) *badger.Item{
+	db := t.d.GetDB()
+	txn := db.NewTransaction(true)
+	item, e  := txn.Get(key)
+	if(e != nil) {
+		txn.Discard()
+	}
+	_ = txn.Commit()
+	return item
+}
+
+func (t *txnImpl) InsertDoc(key []byte, value []byte, collection []byte) error{
+	db := t.d.GetDB()
+	txn := db.NewTransaction(true)
+	e := badger.NewEntry(key, value)
+	err  := txn.SetEntry(e)
+	if(err != nil){
+		txn.Discard()
+		return err
+	}
+	_ = txn.Commit()
 	return nil
 }
 
-func (d *Doc) InsertDoc(key []byte, value []byte, table string) []byte{
+
+func (t *txnImpl) UpdateDoc(key []byte, value []byte, collection []byte) error{
+	db := t.d.GetDB()
+	txn := db.NewTransaction(true)
+	err  := txn.Set(key, value)
+	if(err != nil) {
+		txn.Discard()
+		return err
+	}
+	_ = txn.Commit()
 	return nil
 }
 
-
-func (d *Doc) UpdateDoc(key []byte, value []byte, table string) []byte{
+func (t *txnImpl) DeleteDoc(key []byte, collection []byte) error{
+	db := t.d.GetDB()
+	txn := db.NewTransaction(true)
+	err  := txn.Delete(key)
+	if(err != nil) {
+		txn.Discard()
+		return err
+	}
+	_ = txn.Commit()
 	return nil
-}
-
-func (d *Doc) DeleteDoc(key []byte, value []byte, table string) []byte{
 	return nil
 }
 

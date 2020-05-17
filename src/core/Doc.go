@@ -8,4 +8,3 @@ type Doc struct {
 	version   uint64
 	err       error
 }
-
