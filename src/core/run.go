@@ -1,8 +1,18 @@
 package core
-func init() {
+
+import (
+	"github.com/sumitkmrjha/tutum/src/config"
+)
+
+func init_() {
+	config.InitConfig()
 
 }
 
+
+
+
 func Run() {
+	init_()
 
 }
